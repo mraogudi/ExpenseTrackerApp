@@ -1,0 +1,95 @@
+pipeline {
+  agent any
+
+  options {
+    timestamps()
+    ansiColor('xterm')
+  }
+
+  environment {
+    REGISTRY      = 'registry.example.com'          // e.g. ghcr.io/your-org or docker.io/yourname
+    IMAGE_PREFIX  = 'expense-tracker'               // will produce: expense-tracker-backend / -frontend
+    DOCKER_CREDS  = 'docker-registry-creds'         // Jenkins credentials ID
+    // Frontend build-time API base URL
+    VITE_API_BASE_URL = 'http://backend.yourdomain:8080'
+  }
+
+  stages {
+    stage('Checkout') {
+      steps {
+        checkout scm
+        script {
+          GIT_COMMIT_SHORT = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+          GIT_BRANCH_CLEAN = env.BRANCH_NAME?.replaceAll(/[^A-Za-z0-9_.-]/, '-') ?: 'local'
+          IMAGE_TAG = "${GIT_BRANCH_CLEAN}-${GIT_COMMIT_SHORT}"
+          echo "Tag: ${IMAGE_TAG}"
+        }
+      }
+    }
+
+    stage('Backend: Build & Unit Tests') {
+      steps {
+        dir('backend') {
+          sh 'mvn -q -DskipTests=false clean verify'
+        }
+      }
+      post {
+        always {
+          junit allowEmptyResults: true, testResults: 'backend/target/surefire-reports/*.xml'
+        }
+      }
+    }
+
+    stage('Docker Build (Backend)') {
+      steps {
+        sh """
+          docker build \
+            -f backend/Dockerfile \
+            -t ${REGISTRY}/${IMAGE_PREFIX}-backend:${IMAGE_TAG} \
+            -t ${REGISTRY}/${IMAGE_PREFIX}-backend:latest \
+            .
+        """
+      }
+    }
+
+    stage('Docker Build (Frontend)') {
+      steps {
+        sh """
+          docker build \
+            --build-arg VITE_API_BASE_URL=${VITE_API_BASE_URL} \
+            -f frontend/Dockerfile \
+            -t ${REGISTRY}/${IMAGE_PREFIX}-frontend:${IMAGE_TAG} \
+            -t ${REGISTRY}/${IMAGE_PREFIX}-frontend:latest \
+            .
+        """
+      }
+    }
+
+    stage('Docker Login & Push') {
+      steps {
+        withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDS}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+          sh "echo '${DOCKER_PASS}' | docker login ${REGISTRY} -u '${DOCKER_USER}' --password-stdin"
+        }
+        sh """
+          docker push ${REGISTRY}/${IMAGE_PREFIX}-backend:${IMAGE_TAG}
+          docker push ${REGISTRY}/${IMAGE_PREFIX}-backend:latest
+          docker push ${REGISTRY}/${IMAGE_PREFIX}-frontend:${IMAGE_TAG}
+          docker push ${REGISTRY}/${IMAGE_PREFIX}-frontend:latest
+        """
+      }
+    }
+
+    // Optional: Deploy step hook (call compose/helm/ssh)
+    stage('Deploy') {
+      when { expression { return false } } // flip to true when wiring deploy
+      steps {
+        echo 'Add your deployment logic here (e.g., helm upgrade, docker compose pull+up, or SSH to server).'
+      }
+    }
+  }
+
+  post {
+    success { echo "Build & push successful: ${IMAGE_TAG}" }
+    failure { echo "Build failed" }
+  }
+}
