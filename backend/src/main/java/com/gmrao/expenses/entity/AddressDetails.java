@@ -3,26 +3,27 @@ package com.gmrao.expenses.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDate;
-
 @Entity
-@Table(name = "user_details")
+@Table(name = "address_details")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class UserDetails {
+public class AddressDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private LocalDate dateOfBirth;
-    private String gender;
+    @Column(name = "address_line_2")
+    private String addressLine2;
 
     // Contact details
-    private String phone;
-    private String address;
+    private String state;
+    @Column(name = "address_line_1")
+    private String addressLine1;
     private String city;
     private Long userId;
+    private String pincode;
+    private String country;
 }

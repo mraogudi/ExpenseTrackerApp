@@ -6,6 +6,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import Navbar from './components/Navbar'
 import Expenses from './pages/Expenses'
 import Profile from './pages/Profile';
+import ResetPassword from './pages/ResetPassword';
 
 
 export default function App() {
@@ -40,6 +41,7 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </>

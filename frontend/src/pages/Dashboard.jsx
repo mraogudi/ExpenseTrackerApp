@@ -11,10 +11,20 @@ import {
   Spacer,
   Tooltip,
   Icon,
+  Button,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+  HStack,
 } from "@chakra-ui/react";
+
 import { DownloadIcon } from "@chakra-ui/icons";
+import { FiDownload, FiFileText, FiFile } from "react-icons/fi";
+
 import useAuth from "../hooks/useAuth";
 import expenseService from "../services/expenseService";
+import profileService from "../services/profileService";
 import { saveAs } from "file-saver";
 
 import { Pie, Bar } from "react-chartjs-2";
@@ -55,7 +65,17 @@ export default function Dashboard() {
 
   useEffect(() => {
     loadDashboardData();
+    loadCountries();
   }, []);
+
+  const loadCountries = async () => {
+    try {
+      const res = await profileService.countries();
+      localStorage.setItem("countries", JSON.stringify(res.data));
+    } catch (error) {
+      console.error("Error loading countries:", error);
+    }
+  };
 
   const loadDashboardData = async () => {
     try {
@@ -78,6 +98,42 @@ export default function Dashboard() {
     saveAs(blob, "expenses.csv");
   };
 
+  const downloadExcel = async () => {
+    const blob = await expenseService.exportExcel(user.id);
+    saveAs(blob, "expenses.xlsx");
+  };
+
+  const downloadPDF = async () => {
+    const blob = await expenseService.exportPDF(user.id);
+    saveAs(blob, "expenses.pdf");
+  };
+
+  const CATEGORY_COLORS = [
+    "#4C6FFF",
+    "#FF6B6B",
+    "#FFD93D",
+    "#6BCB77",
+    "#A66BFF",
+    "#FF922B",
+    "#20C997",
+    "#E8308C",
+    "#17A2B8",
+    "#FF8C00",
+    "#8A2BE2",
+    "#00BFA5",
+    "#FF1744",
+    "#D500F9",
+    "#C0CA33"
+  ];
+
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      minimumFractionDigits: 2,
+    }).format(amount);
+  };
+
   if (loading) {
     return (
       <Flex justify="center" align="center" minH="60vh">
@@ -88,7 +144,7 @@ export default function Dashboard() {
 
   return (
     <Box maxW="7xl" mx="auto" p={6}>
-      {/* HEADER WITH DOWNLOAD ICON */}
+      {/* HEADER */}
       <Flex align="center" mb={8}>
         <Heading size="lg">
           Welcome, {user?.name || user?.email} 👋
@@ -96,24 +152,33 @@ export default function Dashboard() {
 
         <Spacer />
 
-        <Tooltip label="Export Data" placement="left" hasArrow>
-          <Box
-            as="span"
-            cursor="pointer"
-            onClick={downloadCSV}
-            p={2}
-            _hover={{ color: "blue.500" }}
-          >
-            <Icon as={DownloadIcon} boxSize={6} />
-          </Box>
-        </Tooltip>
+        {/* DOWNLOAD BUTTON WITH DROPDOWN */}
+        <Menu>
+          <MenuButton as={Button} colorScheme="blue" rightIcon={<FiDownload />}>
+            Export To
+          </MenuButton>
+
+          <MenuList>
+            <MenuItem icon={<FiFileText />} onClick={downloadExcel}>
+              Excel (.xlsx)
+            </MenuItem>
+
+            <MenuItem icon={<FiFile />} onClick={downloadPDF}>
+              PDF (.pdf)
+            </MenuItem>
+
+            <MenuItem icon={<DownloadIcon />} onClick={downloadCSV}>
+              CSV (.csv)
+            </MenuItem>
+          </MenuList>
+        </Menu>
       </Flex>
 
-      {/* Summary Cards */}
+      {/* SUMMARY CARDS */}
       <SimpleGrid columns={{ base: 1, md: 3 }} spacing={6} mb={8}>
         <Card shadow="sm">
           <CardBody textAlign="center">
-            <Heading size="md">₹{summary.totalSpent ?? 0}</Heading>
+            <Heading size="md">₹{summary.totalSpent ? formatCurrency(summary.totalSpent) : 0}/-</Heading>
             <Text>Total Spent</Text>
           </CardBody>
         </Card>
@@ -127,13 +192,13 @@ export default function Dashboard() {
 
         <Card shadow="sm">
           <CardBody textAlign="center">
-            <Heading size="md">₹{summary.avgMonthly ?? 0}</Heading>
+            <Heading size="md">₹{summary.avgMonthly ? formatCurrency(summary.avgMonthly) : 0}/-</Heading>
             <Text>Avg Monthly Spend</Text>
           </CardBody>
         </Card>
       </SimpleGrid>
 
-      {/* Charts */}
+      {/* CHARTS */}
       <SimpleGrid columns={{ base: 1, md: 2 }} spacing={8}>
         {/* Pie Chart */}
         <Card shadow="sm" borderRadius="lg" height="300px">
@@ -191,7 +256,9 @@ export default function Dashboard() {
                       {
                         label: "Amount Spent",
                         data: categoryData.map((c) => c.amount),
-                        backgroundColor: "rgba(76,111,255,0.7)",
+                        backgroundColor: categoryData.map((_, index) =>
+                          CATEGORY_COLORS[index % CATEGORY_COLORS.length]
+                        ),
                       },
                     ],
                   }}

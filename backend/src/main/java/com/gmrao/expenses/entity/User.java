@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -28,8 +29,10 @@ public class User {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    @Lob
     @Column(columnDefinition = "LONGBLOB")
     private byte[] photo;
     private String photoType;
+    private String phone;
+    private String gender;
+    private LocalDate dateOfBirth;
 }

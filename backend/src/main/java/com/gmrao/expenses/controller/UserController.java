@@ -1,9 +1,7 @@
 package com.gmrao.expenses.controller;
 
 import com.gmrao.expenses.entity.User;
-import com.gmrao.expenses.models.PersonalDetailsRequest;
-import com.gmrao.expenses.models.UserContactDetails;
-import com.gmrao.expenses.models.UserDetailsResponse;
+import com.gmrao.expenses.models.*;
 import com.gmrao.expenses.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +11,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/user")
@@ -60,19 +60,33 @@ public class UserController {
     public ResponseEntity<UserDetailsResponse> getUserDetails() {
         UserDetailsResponse returnValue = userService.getUserDetails(getCurrentUserId());
         if (returnValue == null) {
-            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
+            return ResponseEntity.notFound().build();
         }
-        return new ResponseEntity<>(returnValue, HttpStatus.OK);
+        return ResponseEntity.ok(returnValue);
     }
 
     @PostMapping("/photo")
-    public ResponseEntity<String> uploadPhoto(
-            @RequestParam("file") MultipartFile file
-    ) throws Exception {
-
+    public ResponseEntity<String> uploadPhoto(@RequestParam("file") MultipartFile file) throws Exception {
         userService.uploadPhoto(getCurrentUserId(), file);
+        return new ResponseEntity<>("Photo uploaded successfully", HttpStatus.OK);
+    }
 
-        return ResponseEntity.ok().body("Photo uploaded successfully");
+    @DeleteMapping("/photo")
+    public ResponseEntity<String> deletePhoto() throws Exception {
+        userService.deletePhoto(getCurrentUserId());
+        return new ResponseEntity<>("Photo deleted successfully", HttpStatus.OK);
+    }
+
+    @GetMapping("/states/{id}")
+    public ResponseEntity<List<States>> stateList(@PathVariable("id") Long countryId) {
+        List<States> statesList = userService.getStateList(countryId);
+        return ResponseEntity.ok(statesList);
+    }
+
+    @GetMapping("/countries")
+    public ResponseEntity<List<Countries>> countryList() {
+        List<Countries> statesList = userService.getCountryList();
+        return ResponseEntity.ok(statesList);
     }
 
 }

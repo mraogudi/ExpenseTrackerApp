@@ -1,9 +1,7 @@
 package com.gmrao.expenses.controller;
 
 import com.gmrao.expenses.entity.User;
-import com.gmrao.expenses.models.AuthResponse;
-import com.gmrao.expenses.models.LoginRequest;
-import com.gmrao.expenses.models.RegisterRequest;
+import com.gmrao.expenses.models.*;
 import com.gmrao.expenses.service.AuthService;
 import com.gmrao.expenses.service.JwtService;
 import com.gmrao.expenses.service.UserService;
@@ -11,7 +9,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -57,6 +58,25 @@ public class AuthController {
     public ResponseEntity<AuthResponse> register(@RequestBody RegisterRequest registerRequest) {
         AuthResponse authResponse = userService.register(registerRequest);
         return ResponseEntity.ok(authResponse);
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> req) {
+        String email = req.get("email");
+        Map<String, String> response = userService.forgotPassword(email);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest req) {
+        Map<String, String> response = userService.resetPassword(req);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/recover-mail")
+    public ResponseEntity<Map<String, String>> recoverUserNameOrEmail(@RequestBody RecoverUserDetails request) {
+        Map<String, String> response = userService.recoverUserNameOrEmail(request);
+        return ResponseEntity.ok(response);
     }
 
 }
