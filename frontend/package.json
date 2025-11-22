@@ -21,13 +21,16 @@
     "d3-shape": "^3.2.0",
     "file-saver": "^2.0.5",
     "framer-motion": "^10.18.0",
+    "jspdf": "^3.0.4",
+    "jspdf-autotable": "^5.0.2",
     "react": "^18.3.1",
     "react-chartjs-2": "^5.3.1",
     "react-dom": "^18.3.1",
     "react-easy-crop": "^5.5.3",
     "react-icons": "^5.5.0",
     "react-router-dom": "^7.9.5",
-    "recharts": "^3.3.0"
+    "recharts": "^3.3.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",

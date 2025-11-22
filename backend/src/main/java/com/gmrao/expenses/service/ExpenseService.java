@@ -5,9 +5,9 @@ import com.gmrao.expenses.entity.Expense;
 import com.gmrao.expenses.enums.Category;
 import com.gmrao.expenses.models.*;
 import com.gmrao.expenses.repository.ExpenseRepository;
+import com.gmrao.expenses.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
@@ -18,6 +18,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ExpenseService {
     private final ExpenseRepository repo;
+    private final UserRepository userRepository;
 
     public List<ExpenseResponse> list(Long userId) {
         List<Expense> page = repo.findByUserId(userId);
@@ -76,8 +77,22 @@ public class ExpenseService {
         );
     }
 
-    public List<Expense> exportCSV(Long userId) {
-        return repo.findByUserId(userId);
+    public ExportData exportData(Long userId) {
+        String userName = userRepository.findNameById(userId);
+        List<Expense> data = repo.findByUserId(userId);
+        ExportData exportData = new ExportData();
+        exportData.setName(userName);
+        data.stream()
+                .map(exp -> {
+                    ExportDetails exportDetails = new ExportDetails();
+                    exportDetails.setAmount(exp.getAmount());
+                    exportDetails.setCategory(exp.getCategory().getCategory());
+                    exportDetails.setDate(exp.getDate());
+                    exportDetails.setTitle(exp.getTitle());
+                    return exportDetails;
+                })
+                .forEach(exportData.getExportDetails()::add);
+        return exportData;
     }
 
     public ExpenseResponse fetch(Long id) {

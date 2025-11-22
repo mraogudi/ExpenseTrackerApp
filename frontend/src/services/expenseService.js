@@ -17,10 +17,10 @@ const expenseService = {
     apiService.get(`/expenses/${id}`, { successMessage: "Expense Fetched!" }),
 
   getSummary: (userId) => apiService.get("/expenses/summary", { params: { userId } }),
-exportCSV: (userId) => apiService.get("/expenses/export", { params: { userId }, responseType: "blob" }),
-getMonthlyExpenses: (userId) =>
+  exportData: () => apiService.get("/expenses/export"),
+  getMonthlyExpenses: (userId) =>
     apiService.get("/expenses/monthly", { params: { userId } }),
-getCategoryExpenses: (userId) =>
+  getCategoryExpenses: (userId) =>
     apiService.get("/expenses/categories", { params: { userId } }),
 
 };
